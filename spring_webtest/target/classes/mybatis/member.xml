@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="member"> <!-- namespace는 전체 mapper 중에서 유일해야한다. -->
+	
+	<select id="loginCheck" parameterType="map" resultType="int">
+	select count(*) from member
+	where id =#{id}
+	and passwd = #{passwd}
+	</select>
+	
+	<select id="duplicatedID" parameterType="String" resultType="int">
+	select count(id)
+	from member
+	where id=#{id}
+	</select>
+	
+	<select id="duplicatedEmail" parameterType="String" resultType="int">
+	select count(email)
+	from member
+	where email=#{email}
+	</select>
+	
+	<select id="getIdFind" parameterType="map" resultType="String">
+	select id from member
+	where mname = #{mname}
+	and email=#{email}
+	</select>
+	
+	<select id="getPwFind" parameterType="map" resultType="String">
+	select passwd from member 
+	where mname = #{mname}
+	and id=#{id}
+	</select>
+	
+	<select id="getFname" parameterType="String" resultType="String">
+	select fname from member
+	where id = #{id}
+	</select>
+	
+	<select id="getGrade" parameterType="String" resultType="String">
+	select grade from member
+	where id = #{id}
+	</select>
+	
+	<update id="updatePw">
+	
+	update member
+	set passwd = #{passwd}
+	where id = #{id}
+	
+	</update>
+	
+	<update id="updateFile" parameterType="Map">
+	update member
+	set fname= #{fname}
+	where id= #{id}
+	</update>
+
+	<delete id="delete" parameterType="String">
+		delete from member
+		where id = #{id} 
+		
+	</delete>
+
+	<insert id="create" parameterType="MemberDTO">
+
+		insert into member(id, passwd, mname, tel, email, zipcode,
+		address1,address2,job, mdate, fname)
+		values(#{id},#{passwd},#{mname},#{tel},#{email},#{zipcode,jdbcType=VARCHAR},
+		#{address1,jdbcType=VARCHAR},#{address2,jdbcType=VARCHAR},#{job},sysdate,#{fname})
+
+	</insert>
+
+	<update id="update" parameterType="MemberDTO">
+		update member
+		set tel = #{tel},
+		email = #{email},
+		zipcode = #{zipcode, jdbcType=VARCHAR},
+		address1 = #{address1,jdbcType=VARCHAR},
+		address2 = #{address2,jdbcType=VARCHAR},
+		job = #{job}
+		where id = #{id}
+	</update>
+
+	<select id="passCheck" parameterType="map" resultType="int">
+	select count(id) as id
+	from member 
+	where id =#{id} and passwd=#{passwd} 
+	</select>
+
+
+	<select id="read" parameterType="int" resultType="MemberDTO">
+		select * from member
+		where id = #{id}
+	</select>
+
+	<select id="total" parameterType="Map" resultType="int">
+		select count(*) from member
+
+		<where>
+			<choose>
+				<when test="col=='id'">
+					id like '%'||#{word}||'%'
+				</when>
+				<when test="col=='title'">
+					title like '%'||#{word}||'%'
+				</when>
+				<when test="col=='content'">
+					content like '%'||#{word}||'%'
+				</when>
+			</choose>
+		</where>
+
+	</select>
+
+	<select id="list" parameterType="Map" resultType="MemberDTO">
+
+		select id,mname,tel,email,zipcode,address1,address2,fname, r 
+		from(
+		select id,mname,tel,email,zipcode,address1,address2,fname, rownum r
+		from(
+		select id,mname,tel,email,zipcode,address1,address2,fname
+		from member
+		<where>
+			<choose>
+				<when test="col=='id'">
+					id like '%'||#{word}||'%'
+				</when>
+				<when test="col=='mname'">
+					mname like '%'||#{word}||'%'
+				</when>
+				<when test="col=='email'">
+					email like '%'||#{word}||'%'
+				</when>
+			</choose>
+		</where>
+		order by mdate desc
+		)
+<![CDATA[                                                    
+)where r>=#{sno} and r<=#{eno}                                      
+]]>
+	</select>
+
+</mapper>

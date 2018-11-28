@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="img"> <!-- namespace는 전체 mapper 중에서 유일해야한다. -->
+
+	<select id="imgRead" parameterType="int" resultType="map">
+		SELECT *
+		FROM
+		(
+		select
+		lag(no,2,-1) over (order by no) pre_no2,
+		lag(no,1,-1) over (order by no ) pre_no1,
+		no,
+		lead(no,1,-1) over (order by no) nex_no1,
+		lead(no,2,-1) over (order by no) nex_no2,
+		lag(img,2,'default.jpg') over (order by no) pre_file2,
+		lag(img,1,'default.jpg') over (order by no ) pre_file1,
+		img,
+		lead(img,1,'default.jpg') over (order by no) nex_file1,
+		lead(img,2,'default.jpg') over (order by no) nex_file2
+		from (
+		SELECT
+		no, img
+		FROM img
+		ORDER BY no DESC
+		)
+		)
+		WHERE no = #{no}
+	</select>
+
+	<select id="getimg" parameterType="int" resultType="String">
+
+		select img
+		from img where no= #{no}
+
+	</select>
+
+	<delete id="delete" parameterType="int">
+		delete from img
+		where no=#{no}
+	</delete>
+
+	<select id="checkRefnum" parameterType="int" resultType="int">
+		select
+		count(refnum)
+		from img
+		where refnum = #{refnum}
+	</select>
+
+	<insert id="replyCreate" parameterType="imgDTO">
+		insert into img
+		(no,name,title,img,grpno,indent,ansnum,passwd,viewcnt,mdate,refnum)
+		values((select nvl(max(no),0)+1 as no from img),
+		#{name},#{title},#{img},#{grpno},#{indent}+1,#{ansnum}+1,#{passwd},#{viewcnt},sysdate,#{no})
+	</insert>
+
+	<update id="upAnsnum" parameterType="map">
+		update img
+		set ansnum =
+		ansnum + 1
+		where grpno = #{grpno}
+		and ansnum > #{ansnum}
+
+	</update>
+
+	<select id="replyRead" parameterType="int" resultType="imgDTO">
+		select no,
+		title, grpno, indent, ansnum
+		from img
+		where no = #{no}
+	</select>
+
+	<insert id="create" parameterType="imgDTO">
+		insert into
+		img(no,title,name,img, passwd, mdate,grpno)
+		values((select
+		nvl(max(no),0)+1 as no from img),
+		#{title},#{name},#{img},
+		#{passwd}, sysdate,
+		(select nvl(max(grpno),0)+1 as no from img))
+	</insert>
+
+	<update id="update" parameterType="imgDTO">
+		update img
+		set title = #{title},
+		name = #{name},
+		img = #{img}
+		where no = #{no}
+	</update>
+
+	<select id="passCheck" parameterType="map" resultType="int">
+
+		select
+		count(passwd) from img
+		where no=#{no} and passwd=#{passwd}
+
+	</select>
+
+	<update id="upViewcnt" parameterType="int">
+		update img
+		set viewcnt =
+		viewcnt + 1
+		where no =#{no}
+	</update>
+
+	<select id="read" parameterType="int" resultType="imgDTO">
+		SELECT no,
+		name, title, img from img
+		WHERE no=#{no}
+	</select>
+
+	<select id="total" parameterType="Map" resultType="int">
+		select count(*) from img
+
+		<where>
+			<choose>
+				<when test="col=='title'">
+					title like '%'||#{word}||'%'
+				</when>
+				<when test="col=='name'">
+					name like '%'||#{word}||'%'
+				</when>
+			</choose>
+		</where>
+
+	</select>
+
+	<select id="list" parameterType="Map" resultType="imgDTO">
+		select no, title, name, img, grpno, indent,
+		ansnum,
+		passwd, viewcnt, mdate, r
+		from(
+		select
+		no, title, name, img, grpno, indent,
+		ansnum, passwd,
+		viewcnt, mdate, rownum as r
+		from(
+
+		select no, title, name, img, grpno, indent,
+		ansnum,
+		passwd, viewcnt,
+		to_char(mdate,'yyyy-mm-dd') as mdate
+
+		from img
+
+		<where>
+			<choose>
+				<when test="col=='name'">
+					wname like '%'||#{word}||'%'
+				</when>
+				<when test="col=='title'">
+					title like '%'||#{word}||'%'
+				</when>
+				
+			</choose>
+		</where>
+		order by grpno desc, ansnum
+		) 
+<![CDATA[                                                    
+)where r>=#{sno} and r<=#{eno}                                      
+]]>
+	</select>
+
+</mapper>
